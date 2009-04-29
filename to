@@ -1,0 +1,345 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+# shaozx@gmail.com 20080826
+
+import os, sys, ConfigParser
+import struct, fcntl, termios, signal
+
+try:
+    import pexpect, pxssh
+except:
+    print "需要使用 python-pexpect 组件:\n\tsudo apt-get install python-pexpect "
+    sys.exit(-1)
+
+
+def Log(info):
+    print "\n\t %s \n" % info
+
+
+def sig_resizewin(sig, data):
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ , s))
+    child.setwinsize(a[0],a[1])
+
+
+def checkConfig(inifile):
+    try:
+        f = open(inifile,'r')
+        f.close()
+    except:
+        f = open(inifile,'w')
+        f.write("#\n# to.hosts\n#\n")
+        f.write("[demo]\nhost=10.0.2.3\nname=john\npass=123456\ntype=telnet")
+        f.close()
+        Log( "配置文件已经创建[%s],增加新主机信息后重试" % inifile )
+        sys.exit(-1)
+
+
+def get_hostinfo(hostid):
+    # 打开配置文件 to.hosts
+    inifile = os.path.dirname( sys.argv[0] ) + '/to.hosts'
+    if inifile == '/to.hosts': inifile = 'to.hosts'
+    checkConfig(inifile)
+
+    hostinfo={ 'hostid':'',
+            'host':'', 'name':'', 'pass':'', 'type':'', 'code':''}
+
+    # 读配置文件,取出对应主机信息
+    conf = ConfigParser.ConfigParser()
+    conf.readfp( open(inifile) )
+    if not conf.has_section(hostid):
+        Log( "错误:没有[%s]对应的主机信息" % hostid )
+        return -1
+
+    hostinfo["hostid"] = hostid
+    # host name pass
+    try:
+        hostinfo["host"] = conf.get(hostid,"host")
+        hostinfo["name"] = conf.get(hostid,"name")
+        hostinfo["pass"] = conf.get(hostid,"pass")
+    except:
+        Log( "错误:主机参数[host/name/pass]有误" )
+        return -1
+    # type
+    try:
+        hostinfo["type"] = conf.get(hostid,"type")
+    except:
+        hostinfo["type"] = "telnet"
+    # code
+    try:
+        hostinfo["code"] = conf.get(hostid,"code")
+    except:
+        hostinfo["code"] = ""
+
+    return hostinfo
+
+
+def TO_TELNET(hostinfo):
+    hostaddr=hostinfo["host"]
+    username=hostinfo["name"]
+    password=hostinfo["pass"]
+    code=hostinfo["code"]
+
+    """ 执行连线动作"""
+    global child
+    if len(code) > 0 :
+        child = pexpect.spawn( 'luit -x -encoding %s telnet -E %s' % (code,hostaddr) );
+    else:
+        child = pexpect.spawn( 'telnet -E ' + hostaddr );
+
+    signal.signal(signal.SIGWINCH, sig_resizewin)
+    try:
+        index = child.expect([               \
+                '[Ll]ogin:( )$'             ,\
+                'No route to host'          ,\
+                'Network is unreachable'    ,\
+                'Name or service not known' ,\
+                'No such device'            ,\
+                'Connection refused'         \
+                ],timeout=10)
+        if index != 0 :
+            Log( "错误[%s]:连接主机失败" % index )
+            return -1
+    except:
+        Log( "错误:连接主机失败(超时)" )
+        return -1
+
+    print "%s%s" % ( child.before, child.after ),
+
+    child.sendline(username);
+
+    try:
+        index = child.expect([ '[Pp]assword[: ]' ],timeout=10 )
+        if index != 0 :
+            Log( "错误:等待密码提示失败" )
+            return -1
+    except:
+        Log( "错误:等待密码提示失败(超时)" )
+        return -1
+
+    print "%s%s" % ( child.before, child.after ),
+
+    child.sendline(password)
+
+    try:
+        index = child.expect(['(>|%|#|$)','invalid'],timeout=10)
+        if index != 0 :
+            Log( "错误:等待交互提示符失败" )
+            return -1
+    except:
+        Log( "错误:等待交互提示符失败(超时)" )
+        return -1
+
+    print "%s%s" % ( child.before, child.after )
+    print "##################################################"
+    print "#   auto login success, have a lot of fun ...    #"
+    print "##################################################"
+    print "telnet://%s@%s" % ( username,hostaddr ),
+    child.sendline()
+    try:
+        child.interact("::")
+        Log( "结束:交互完成!" )
+    except Exception,e:
+        #print type(e); print e.args; print e
+        Log( "错误:交互中断,退出!" )
+        return -1
+
+def TO_SSH(hostinfo):
+    hostaddr=hostinfo["host"]
+    username=hostinfo["name"]
+    password=hostinfo["pass"]
+    code=hostinfo["code"]
+
+    """ 执行连线动作"""
+    global child
+    if len(code)>0 :
+        child = pexpect.spawn( 'luit -x -encoding %s ssh %s@%s' % (code,username,hostaddr) );
+    else :
+        child = pexpect.spawn( 'ssh %s@%s' % (username,hostaddr) );
+    signal.signal(signal.SIGWINCH, sig_resizewin)
+    try:
+        index = child.expect([               \
+                '\(yes\/no\)\? '            ,\
+                '[Pp]assword[: ]'           ,\
+                'No route to host'          ,\
+                'Network is unreachable'    ,\
+                'Name or service not known' ,\
+                'No such device'            ,\
+                'IDENTIFICATION HAS CHANGED',\
+                'Connection refused'         \
+                ],timeout=10)
+
+        print "%s%s" % ( child.before, child.after ),
+
+        if index == 0 :
+            child.sendline("yes")
+            try:
+                child.expect( 'assword(:| )', timeout=10 )
+                print "%s%s" % ( child.before, child.after ),
+                child.sendline(password)
+            except:
+                Log( "错误:等待密码提示失败" )
+                return -1
+        elif index == 1 :
+            child.sendline(password)
+        elif index == 6 :
+            Log( "错误[%s]:密码或密钥已更改" % index )
+            return -1
+        else:
+            Log( "错误[%s]:连接主机失败" % index )
+            return -1
+    except Exception, e:
+        #print type(e); print e.args; print e
+        Log( "错误:连接主机失败(超时)" )
+        return -1
+
+    try:
+        index = child.expect(['[>%#\$] {0,1}$','assword:'],timeout=10)
+        if index == 1 :
+            Log( "错误:密码有误" )
+            return -1
+    except:
+        Log( "错误:等待交互提示符失败(超时)" )
+        return -1
+
+    print "%s%s" % ( child.before, child.after )
+    print "##################################################"
+    print "#   auto login success, have a lot of fun ...    #"
+    print "##################################################"
+    print "ssh://%s@%s" % ( username,hostaddr ),
+    child.sendline()
+    try :
+        child.interact("::")
+        Log( "结束:交互完成!" )
+    except pexpect.EOF :
+        Log( "错误:交互中断,EOF!" )
+        pass
+    except :
+        Log( "错误:交互中断,退出!" )
+        return -1
+
+def TO_FTP(hostinfo):
+    hostaddr=hostinfo["host"]
+    username=hostinfo["name"]
+    password=hostinfo["pass"]
+    code=hostinfo["code"]
+
+    """ 执行连线动作"""
+    global child
+    child = pexpect.spawn( 'ftp -n ' + hostaddr );
+
+    signal.signal(signal.SIGWINCH, sig_resizewin)
+
+    try:
+        index = child.expect([               \
+                'ftp> '                     ,\
+                'Connection refused'        ,\
+                'Host name lookup failure'  ,\
+                'No route to host'          ,\
+                'Network is unreachable'    ,\
+                'Name or service not known' ,\
+                ],timeout=10)
+        print "%s%s" % ( child.before, child.after ),
+        if index == 0 :
+            child.sendline( "user " + username );
+        else :
+            Log( "错误[%s]:主机交互失败" % index )
+            return -1
+    except:
+        Log( "错误:连接主机失败(超时)" )
+        return -1
+
+    while True :
+        try:
+            index = child.expect([               \
+                    '\n220 .*\nName .*:'       ,\
+                    '\n230 .*'                  ,\
+                    '\n331 .*\n[Pp]assword:'    ,\
+                    '\n530 .*'                  ,\
+                    ],timeout=10)
+            print "%s%s" % ( child.before, child.after ),
+            if index == 0 :
+                child.sendline(username);
+            elif index == 1 :
+                break
+            elif index == 2 :
+                child.sendline(password)
+            elif index == 3 :
+                Log( "错误:密码错误" )
+                return -1
+            else :
+                Log( "错误[%s]:连接主机失败" % index )
+                return -1
+        except:
+            Log( "错误:连接主机失败(超时)" )
+            return -1
+
+    try:
+        index = child.expect(['> '],timeout=10)
+    except:
+        Log( "错误:等待交互提示符失败(超时)" )
+        return -1
+
+    print "%s%s" % ( child.before, child.after )
+
+    print "##################################################"
+    print "#   auto login success, have a lot of fun ...    #"
+    print "##################################################"
+    print "ftp://%s@%s" % ( username,hostaddr ),
+    child.sendline()
+
+    try:
+        child.interact()
+        Log( "结束:交互完成!" )
+    except Exception,e:
+        Log( "错误:交互中断,退出!" )
+        return -1
+
+def showhelp():
+    print """
+\033[1mNAME\033[0m
+    to - telnet or ssh to remote machine.
+
+\033[1mSYNOPSIS\033[0m
+    \033[1mto\033[0m hostid
+
+\033[1mDESCRIPTION\033[0m
+    telnet or ssh to remote machine and try autologin.
+ ----------------------------------------------------------------------
+ USAGE :
+    to <tab>     show hosts configed in $HOME/.to.hosts
+    to hostid    resolve host from config and try autologin
+    to --help    display this help and exit
+ ----------------------------------------------------------------------
+
+\033[1mAUTHOR\033[0m
+  shaozx@gmail.com [ 20080826 ]
+
+          """
+
+
+if __name__ == "__main__":
+    # HELP
+    if len(sys.argv) == 1 :
+        showhelp()
+        sys.exit(-1)
+
+    # >1
+    hostid=sys.argv[1]
+    hostinfo=get_hostinfo(hostid)
+    if hostinfo == -1 :
+        sys.exit(-1)
+
+    # >2
+    if len(sys.argv) > 2 :
+        type = sys.argv[2]
+    else:
+        type = hostinfo["type"]
+
+    if type == "ssh":
+        TO_SSH(hostinfo);
+    elif type == "ftp":
+        TO_FTP(hostinfo);
+    else : # telnet
+        TO_TELNET(hostinfo);
+
