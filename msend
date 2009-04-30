@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
-import os ,sys
+import os, sys
 import getopt
 import libgmail
 
 class GmailSender(libgmail.GmailAccount) :
     def __init__(self,myacct,passwd):
-        self.myacct = myacct
-        self.passwd = passwd
-
         proxy = os.getenv("http_proxy")
         if proxy :
             libgmail.PROXY_URL = proxy
@@ -23,7 +20,6 @@ class GmailSender(libgmail.GmailAccount) :
         except Exception,err:
             print "Login failed. (Check network?)\n",err
             sys.exit(1)
-
 
     def sendMessage(self,to,subject,msg,files):
         if files :
@@ -40,6 +36,7 @@ class GmailSender(libgmail.GmailAccount) :
             print err
             return 1
 
+
 class TOOLS :
     def extrPath(path):
         list=[]
@@ -51,11 +48,8 @@ class TOOLS :
     extrPath = staticmethod(extrPath)
 
 if __name__ == "__main__":
-    
     to=subject=zip=None
-    msg=""
-    files=[]
-    zip=[]
+    msg=""; files=[]; zip=[]
     
     # getopt
     try:
@@ -115,8 +109,7 @@ if __name__ == "__main__":
         zip.append("/tmp/%s.zip"%name)
 
     files += zip
-    #print msg
-    #sys.exit(0)
+    
     if not subject and len(files)>0:
         subject="Send %d files."%len(files)
 
@@ -147,7 +140,9 @@ if __name__ == "__main__":
     gs = GmailSender( myacct,passwd )
     if gs.sendMessage(to,subject,msg,files):
         print "FAIL"
+        sys.exit(4)
     else:
         for f in zip:
             os.unlink(f)
         print "OK"
+        sys.exit(0)
