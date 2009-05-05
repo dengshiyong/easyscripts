@@ -1,6 +1,9 @@
 
 mkdir -p $HOME/bin
-cp chsdir chs_completion $HOME/bin/ && \
-echo '[ -f $HOME/bin/chs_completion ] && . $HOME/bin/chs_completion' >> $HOME/.bashrc
+cp chsdir chs_completion $HOME/bin/
+[ $? -ne 0 ] && echo "FAIL!" && exit 3
+echo '. $HOME/bin/chs_completion' >> $HOME/.bashrc
+echo 'PATH=$PATH:$HOME/bin' >>  $HOME/.bashrc
 
-echo "Close and open new terminal."
+echo "Install finished."
+echo "Open new terminal to use it."
