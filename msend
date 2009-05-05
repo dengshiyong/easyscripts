@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+# shaozx@gmail.com 2009-05-04 
 
 import os, sys
 import getopt
@@ -45,7 +46,14 @@ class TOOLS :
                 list.append("%s/%s"%(root,f))
         return list
 
+    def showArgv(list):
+        for l in list:
+            print l,
+        print "\n"
+
     extrPath = staticmethod(extrPath)
+    showArgv = staticmethod(showArgv)
+
 
 if __name__ == "__main__":
     to=subject=zip=None
@@ -57,7 +65,7 @@ if __name__ == "__main__":
                 't:s:m:f:d:z:',
                 [ 'to=', 'subject=', 'msg=', 'files=',"dir=","zip=" ])
     except getopt.GetoptError,err:
-        print str(err)
+        print "getopt:",str(err)
         sys.exit(2)
     
     for o,a in opts:
@@ -111,7 +119,7 @@ if __name__ == "__main__":
     files += zip
     
     if not subject and len(files)>0:
-        subject="Send %d files."%len(files)
+        subject="Send %d files. %s..."%(len(files),files[0])
 
     if not to or not subject:
         print """
@@ -139,7 +147,8 @@ if __name__ == "__main__":
     myacct,passwd = open( conf ).read().split()
     gs = GmailSender( myacct,passwd )
     if gs.sendMessage(to,subject,msg,files):
-        print "FAIL"
+        print "FAIL:",
+        TOOLS.showArgv(sys.argv)
         sys.exit(4)
     else:
         for f in zip:
