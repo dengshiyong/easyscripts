@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-# shaozx@gmail.com 20080826
+# shaozx@gmail.com 20090426
 
 import os, sys, ConfigParser
 import struct, fcntl, termios, signal
