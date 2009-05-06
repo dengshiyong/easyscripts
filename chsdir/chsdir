@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# shaozx@gmail.com 2009-05-04
+# shaozx@gmail.com 2009-05-06
 #
 # 在控制台使用 cd 命令时用拼音补全中文路径
 #
@@ -41,8 +41,33 @@ def getPYSTR(s):
     s=unicode(s,"utf8")
     ret = ""
     for i in range(len(s)):
-        ret += getPY(s[i])
+        ret += getPY(getSym(s[i]))
     return ret
+
+def getSym(s):
+    if s==unicode("～","UTF8"): return unicode("~","UTF8")
+    if s==unicode("！","UTF8"): return unicode("!","UTF8")
+    if s==unicode("＠","UTF8"): return unicode("@","UTF8")
+    if s==unicode("＃","UTF8"): return unicode("#","UTF8")
+    if s==unicode("＄","UTF8"): return unicode("$","UTF8")
+    if s==unicode("％","UTF8"): return unicode("%","UTF8")
+    if s==unicode("＆","UTF8"): return unicode("&","UTF8")
+    if s==unicode("＊","UTF8"): return unicode("*","UTF8")
+    if s==unicode("（","UTF8"): return unicode("(","UTF8")
+    if s==unicode("）","UTF8"): return unicode(")","UTF8")
+    if s==unicode("＿","UTF8"): return unicode("_","UTF8")
+    if s==unicode("－","UTF8"): return unicode("-","UTF8")
+    if s==unicode("＋","UTF8"): return unicode("+","UTF8")
+    if s==unicode("［","UTF8"): return unicode("[","UTF8")
+    if s==unicode("］","UTF8"): return unicode("]","UTF8")
+    if s==unicode("＜","UTF8"): return unicode("<","UTF8")
+    if s==unicode("＞","UTF8"): return unicode(">","UTF8")
+    if s==unicode("？","UTF8"): return unicode("?","UTF8")
+    if s==unicode("，","UTF8"): return unicode(",","UTF8")
+    if s==unicode("。","UTF8"): return unicode(".","UTF8")
+    if s==unicode("／","UTF8"): return unicode("/","UTF8")
+    if s==unicode("、","UTF8"): return unicode(",","UTF8")
+    return s
 
 def getPY(s):
     try: s=s.encode("GB18030")
@@ -101,11 +126,12 @@ if __name__== '__main__':
 
     ret = []
     for l in list:
-        if dironly == "x-d" and not os.path.isdir(l): continue
         if l == getPYSTR(l) : continue
         l = l.replace("\\","")
         if l.find(name) == 0 or getPYSTR(l).find(getPYSTR(_name)) == 0:
-            ret.append( (dir+"/"+l).replace(".//","") )
+            tmp = (dir+"/"+l).replace(".//","")
+            if dironly == "x-d" and not os.path.isdir(tmp): continue
+            ret.append( tmp )
     if idx and len(ret) > idx-1:
         print ret[idx-1]
     else:
