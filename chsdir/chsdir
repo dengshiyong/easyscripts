@@ -29,13 +29,14 @@
 #
 # 问题：
 #  1、多音字无法解决,比如[浙江建行]要输入[zjjx];
-#  2、建议尽量少输入,用数字序号定位(现在序号有乱序问题，修改中...)
+#  2、大字符集输不进去，比如[草蜢]的"蜢"字,建议尽量少输入,用数字序号定位
 #
 # 祝Linux之行一路顺风!
 # 有问题邮件联系!
 #
 
 import os,sys
+import re,locale
 
 def getPYSTR(s):
     s=unicode(s,"utf8")
@@ -72,34 +73,35 @@ def getSym(s):
 def getPY(s):
     try: s=s.encode("GB18030")
     except: pass
-    if s<"\xb0\xa1" or s>"\xd7\xf9": return s
-    if s<"\xb0\xc4": return "a"
-    if s<"\xb2\xc0": return "b"
-    if s<"\xb4\xed": return "c"
-    if s<"\xb6\xe9": return "d"
-    if s<"\xb7\xa1": return "e"
-    if s<"\xb8\xc0": return "f"
-    if s<"\xb9\xfd": return "g"
-    if s<"\xbb\xf6": return "h"
-    if s<"\xbf\xa5": return "j"
-    if s<"\xc0\xab": return "k"
-    if s<"\xc2\xe7": return "l"
-    if s<"\xc4\xc2": return "m"
-    if s<"\xc5\xb5": return "n"
-    if s<"\xc5\xbd": return "o"
-    if s<"\xc6\xd9": return "p"
-    if s<"\xc8\xba": return "q"
-    if s<"\xc8\xf5": return "r"
-    if s<"\xcb\xf9": return "s"
-    if s<"\xcd\xd9": return "t"
-    if s<"\xce\xf3": return "w"
-    if s<"\xd1\xb8": return "x"
-    if s<"\xd4\xd0": return "y"
-    if s<"\xd7\xf9": return "z"
+    if s<"\xb0\xa1": return s
+    if s>"\xd7\xf9": return "?"
+    if s<"\xb0\xc5": return "a"
+    if s<"\xb2\xc1": return "b"
+    if s<"\xb4\xee": return "c"
+    if s<"\xb6\xea": return "d"
+    if s<"\xb7\xa2": return "e"
+    if s<"\xb8\xc1": return "f"
+    if s<"\xb9\xfe": return "g"
+    if s<"\xbb\xf7": return "h"
+    if s<"\xbf\xa6": return "j"
+    if s<"\xc0\xac": return "k"
+    if s<"\xc2\xe8": return "l"
+    if s<"\xc4\xc3": return "m"
+    if s<"\xc5\xb6": return "n"
+    if s<"\xc5\xbe": return "o"
+    if s<"\xc6\xda": return "p"
+    if s<"\xc8\xbb": return "q"
+    if s<"\xc8\xf6": return "r"
+    if s<"\xcb\xfa": return "s"
+    if s<"\xcd\xda": return "t"
+    if s<"\xce\xf4": return "w"
+    if s<"\xd1\xb9": return "x"
+    if s<"\xd4\xd1": return "y"
+    if s<"\xd7\xfa": return "z"
 
 if __name__== '__main__':
     if len(sys.argv) != 3 :
-        sys.exit(0)
+        sys.exit(1)
 
     dironly = sys.argv[1]
     cur = sys.argv[2]
@@ -132,6 +134,8 @@ if __name__== '__main__':
             tmp = (dir+"/"+l).replace(".//","")
             if dironly == "x-d" and not os.path.isdir(tmp): continue
             ret.append( tmp )
+    locale.setlocale(locale.LC_ALL,"")
+    ret.sort(key=locale.strxfrm)
     if idx and len(ret) > idx-1:
         print ret[idx-1]
     else:
