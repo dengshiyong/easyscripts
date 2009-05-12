@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# shaozx@gmail.com 2009-05-06
+# shaozx@gmail.com 2009-05-09
 #
-# 在控制台使用 cd 命令时用拼音补全中文路径
+# 用拼音补全命令行中的中文名称和路径
 #
 # 实验目录如下：
 # biff@lenovo:/domain/WorkSpace$ ls
@@ -18,25 +18,30 @@
 #    cd zj1   <tab>             进入[浙江建行]
 #    cd zj2   <tab>             进入[浙江农信]
 #
-# 配置: ( 可以直接执行 sh install.sh 进行安装 )
-#     找到 /etc/bash_completion 中 _file_dir() 函数，将
-#        COMPREPLY=( "${COMPREPLY[@]}" "${toks[@]}" )
-#     改成 ( 其中chsdir为本脚的名字,注意指定路径和赋执行权限 )
-#        chs=($(chsdir "x$1" "$cur"))
-#        COMPREPLY=( "${COMPREPLY[@]}" "${toks[@]}" "${chs[@]}" )
-#     这是最简单的，但也是最不安全的。还有其它的方法，比如将这段函数粘到$HOME/.bashrc文件中,在引用/etc/bash_completion之后再覆盖性的定义一遍。或者另起一个文件保存这段脚本，然后在.bashrc中用 . $HOME/bin/myscript.sh 导入一遍。注意小点点。
-#     上面的修改只对 cd 命令生效,如果其它地方也需要补全,比如vim,还要用相同的方法处理 _filedir_xspec() 函数
+#   2009-05-08修订  取不到拼音的汉字匹配任何字符
+#   2009-05-07新增  名称中有中文全角,可以用英文符号补全
+#   2009-05-06修订  解决数字序号定位时借位的问题
+#
+# 配置: 
+#    直接执行 sh install.sh 进行安装;
 #
 # 问题：
-#  1、多音字无法解决,比如[浙江建行]要输入[zjjx];
-#  2、大字符集输不进去，比如[草蜢]的"蜢"字,建议尽量少输入,用数字序号定位
+#  1、多音字未解决,比如[浙江建行]要输入[zjjx];
+#  2、大字符集输入使用变通的方法(取不到拼音的汉字匹配任何字符)
+#
+# 蔡国权/ 蔡依林/ 陈百强/ 陈楚生/ 陈慧琳/ 陈坤/   陈淑桦/ 成龙/
+# 蔡琴/   草蜢/   陈柏宇/ 陈海铃/ 陈慧娴/ 陈倩倩/ 陈小春/
+#  如上,因为"蜢"和"倩"都是"?",[草蜢]无法用[cm]进入,只能用[c4]进入
+#  如果输入[cm<tab>],会提示[草蜢]和[陈倩倩],这时用[cm1]进入
+#  如果输入[cq<tab>],会提示[蔡琴][草蜢]和[陈倩倩]，同样用数字选择
+#
 #
 # 祝Linux之行一路顺风!
 # 有问题邮件联系!
 #
 
 import os,sys
-import re,locale
+import locale
 
 def getPYSTR(s):
     s=unicode(s,"utf8")
@@ -121,20 +126,36 @@ if __name__== '__main__':
     if not os.path.exists(dir):
         sys.exit(0)
 
-    list = os.listdir(dir)
+    try:
+        list = os.listdir(dir)
+    except:
+        sys.exit(0)
 
     if name in list or _name in list :
         sys.exit(0)
 
     ret = []
+
+    _name_py= getPYSTR(_name).replace("\\","");
     for l in list:
-        if l == getPYSTR(l) : continue
-        l = l.replace("\\","")
-        if l.find(name) == 0 or getPYSTR(l).find(getPYSTR(_name)) == 0:
+        _file_py= getPYSTR(l).replace("\\","")
+        if l == _file_py : continue
+
+        i=0
+        while len(_name_py) > i and len(_file_py) > i :
+            if _file_py[i] == "?" or _file_py[i] == _name_py[i] :
+                i+=1; continue;
+            if _name_py[i]!=l[i] : break
+        if len(_name_py) == i :
             tmp = (dir+"/"+l).replace(".//","")
             if dironly == "x-d" and not os.path.isdir(tmp): continue
             ret.append( tmp )
-    locale.setlocale(locale.LC_ALL,"")
+
+    try:
+        locale.setlocale(locale.LC_ALL,"")
+    except:
+        print >>sys.stderr,"\nlocale not support\n"
+
     ret.sort(key=locale.strxfrm)
     if idx and len(ret) > idx-1:
         print ret[idx-1]
