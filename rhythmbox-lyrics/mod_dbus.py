@@ -40,9 +40,7 @@ class LyricsDBus :
         self.__lyfilename = "%s/.lyrics/%s/%s.lyric" % (os.getenv("HOME"),self.artist,self.title)
 
         if not os.path.exists(self.__lyfilename) :
-            lines = self.__lys.searchLyric(self.title,self.artist)
-            if lines != [] :
-                self.__lys.saveLyric(lines)
+            LyricsSearch(self.title,self.artist).start()
 
         self.__loc.Reset()
 
@@ -101,7 +99,6 @@ class LyricsDBus :
                 error_handler=self._report_dbus_error)
         
         self.__loc = LyricsLocate()
-        self.__lys = LyricsSearch()
 
         self.connected = True
 
@@ -113,7 +110,6 @@ class LyricsDBus :
         self.__player = None
         self.__shell = None
         self.__loc = None
-        self.__lys = None
 
     def _set_no_song(self):
         print "CALL LyricsDBus _set_no_song"

@@ -2,8 +2,8 @@
 # -*- coding: utf8 -*-
 
 import os, sys, re
-
 import urllib2
+from threading import Thread
 
 
 class wget:
@@ -30,28 +30,39 @@ class wget:
 
         urlfile = self.__OPENER.open(url)
         return urlfile
-    
+
     def geturlaslines(self,url):
         #print "CALL wget geturlaslines"
         if self.__OPENER is None :
             self.__initOpener()
 
-        urlfile = self.__OPENER.open(url)
-        return urlfile.readlines()
+        try:
+            urlfile = self.__OPENER.open(url)
+            return urlfile.readlines()
+        except:
+            print "ERROR: network error"
+            return []
 
-class LyricsSearch :
-    def __init__(self):
+class LyricsSearch(Thread) :
+    def __init__(self,title,artic="UNKNOWN",check=True):
         print "CALL LyricsSearch __init__"
-        self.__artic = "UNKOWN"
-        self.__title = "NULL"
-
+        self.__title = title
+        self.__artic = artic
+        self.__check = check
         lypath = "%s/.lyrics/" % os.environ.get('HOME')
         if not os.path.exists(lypath):
             os.mkdir(lypath)
 
-    def searchLyric(self,title,artic="UNKNOWN",check=True):
+        Thread.__init__(self)
+
+    def searchLyric(self):
         print "CALL LyricsSearch searchLyric"
         """ get lyric from mp3.sogou.com """
+
+        title = self.__title
+        artic = self.__artic
+        check = self.__check
+
         w = wget()
         URL = "http://mp3.sogou.com/gecisearch.so?query=%s-%s" % ( artic,title )
         print "SONG [%s][%s]" %(artic,title)
@@ -71,7 +82,7 @@ class LyricsSearch :
             art=tit=None
             for n in lyrows :
                 n = unicode(n,"GB18030").encode("UTF8")
-                if re.search("^\[ar:",n): 
+                if re.search("^\[ar:",n):
                     art = n[n.find("[ar:"):]
                     art = art[4:art.find("]")]
                 if re.search("^\[ti:",n):
@@ -104,16 +115,7 @@ class LyricsSearch :
         f.write(s)
         f.close()
 
-if __name__ == "__main__":
-    argc = len(sys.argv)
-    mm = LyricsSearch()
-    if argc == 1 :
-        lines = mm.searchLyric("我的中国心")
-        mm.saveLyric(lines)
-    elif argc == 2 :
-        lines = mm.searchLyric(sys.argv[1])
-        mm.saveLyric(lines)
-    elif argc == 3 :
-        lines = mm.searchLyric(sys.argv[1],sys.argv[2])
-        mm.saveLyric(lines)
-
+    def run(self):
+        lines = self.searchLyric()
+        if lines != [] :
+            self.saveLyric(lines)
