@@ -28,7 +28,7 @@ class LyricsOSD :
         try:
             self.__OSD.set_font( conf.get("OSD","font") )
         except:
-            self.__OSD.set_font("-*-bookman-*-*-*-*-34-*-*-*-*-*-*-*,-*-kai-*-*-*-*-48-*-*-*-*-*-*-*")
+            self.__OSD.set_font("-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
 
         try:
             self.__OSD.set_colour( conf.get("OSD","colour") )
