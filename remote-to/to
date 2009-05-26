@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-# shaozx@gmail.com 20080826
+# shaozx@gmail.com 20090426
 
 import os, sys, ConfigParser
 import struct, fcntl, termios, signal
@@ -309,6 +309,7 @@ def showhelp():
  USAGE :
     to <tab>     show hosts configed in $HOME/.to.hosts
     to hostid    resolve host from config and try autologin
+    to hostid ftp    autologin with ftp protocol
     to --help    display this help and exit
  ----------------------------------------------------------------------
 
