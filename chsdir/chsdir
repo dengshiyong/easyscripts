@@ -44,7 +44,10 @@ import os,sys
 import locale
 
 def getPYSTR(s):
-    s=unicode(s,"utf8")
+    try:
+        s=unicode(s,"utf8")
+    except:
+        return s
     ret = ""
     for i in range(len(s)):
         ret += getPY(getSym(s[i]))
