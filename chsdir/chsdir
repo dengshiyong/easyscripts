@@ -44,43 +44,45 @@ import os,sys
 import locale
 
 def getPYSTR(s):
-    try:
-        s=unicode(s,"utf8")
-    except:
-        return s
+    try: s=unicode(s,"UTF8")
+    except: return s
+
     ret = ""
     for i in range(len(s)):
         ret += getPY(getSym(s[i]))
     return ret
 
 def getSym(s):
-    if s==unicode("～","UTF8"): return unicode("~","UTF8")
-    if s==unicode("！","UTF8"): return unicode("!","UTF8")
-    if s==unicode("＠","UTF8"): return unicode("@","UTF8")
-    if s==unicode("＃","UTF8"): return unicode("#","UTF8")
-    if s==unicode("＄","UTF8"): return unicode("$","UTF8")
-    if s==unicode("％","UTF8"): return unicode("%","UTF8")
-    if s==unicode("＆","UTF8"): return unicode("&","UTF8")
-    if s==unicode("＊","UTF8"): return unicode("*","UTF8")
-    if s==unicode("（","UTF8"): return unicode("(","UTF8")
-    if s==unicode("）","UTF8"): return unicode(")","UTF8")
-    if s==unicode("＿","UTF8"): return unicode("_","UTF8")
-    if s==unicode("－","UTF8"): return unicode("-","UTF8")
-    if s==unicode("＋","UTF8"): return unicode("+","UTF8")
-    if s==unicode("［","UTF8"): return unicode("[","UTF8")
-    if s==unicode("］","UTF8"): return unicode("]","UTF8")
-    if s==unicode("＜","UTF8"): return unicode("<","UTF8")
-    if s==unicode("＞","UTF8"): return unicode(">","UTF8")
-    if s==unicode("？","UTF8"): return unicode("?","UTF8")
-    if s==unicode("，","UTF8"): return unicode(",","UTF8")
-    if s==unicode("。","UTF8"): return unicode(".","UTF8")
-    if s==unicode("／","UTF8"): return unicode("/","UTF8")
-    if s==unicode("、","UTF8"): return unicode(",","UTF8")
+    try: chr = s.encode("UTF8")
+    except: return s
+    if chr <= '~' : return s
+    if chr=="～" : return unicode("~","UTF8")
+    if chr=="！" : return unicode("!","UTF8")
+    if chr=="＠" : return unicode("@","UTF8")
+    if chr=="＃" : return unicode("#","UTF8")
+    if chr=="＄" : return unicode("$","UTF8")
+    if chr=="％" : return unicode("%","UTF8")
+    if chr=="＆" : return unicode("&","UTF8")
+    if chr=="＊" : return unicode("*","UTF8")
+    if chr=="（" : return unicode("(","UTF8")
+    if chr=="）" : return unicode(")","UTF8")
+    if chr=="＿" : return unicode("_","UTF8")
+    if chr=="－" : return unicode("-","UTF8")
+    if chr=="＋" : return unicode("+","UTF8")
+    if chr=="［" : return unicode("[","UTF8")
+    if chr=="］" : return unicode("]","UTF8")
+    if chr=="＜" : return unicode("<","UTF8")
+    if chr=="＞" : return unicode(">","UTF8")
+    if chr=="？" : return unicode("?","UTF8")
+    if chr=="，" : return unicode(",","UTF8")
+    if chr=="。" : return unicode(".","UTF8")
+    if chr=="／" : return unicode("/","UTF8")
+    if chr=="、" : return unicode(",","UTF8")
     return s
 
 def getPY(s):
     try: s=s.encode("GB18030")
-    except: pass
+    except: return s
     if s<"\xb0\xa1": return s
     if s>"\xd7\xf9": return "?"
     if s<"\xb0\xc5": return "a"
