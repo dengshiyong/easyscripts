@@ -22,7 +22,7 @@
 #   2009-05-07新增  名称中有中文全角,可以用英文符号补全
 #   2009-05-06修订  解决数字序号定位时借位的问题
 #
-# 配置: 
+# 配置:
 #    直接执行 sh install.sh 进行安装;
 #
 # 问题：
@@ -43,71 +43,84 @@
 import os,sys
 import locale
 
+LIST_POLYPHONE={ u"龟":u"jgq", u"咯":u"gkl", u"轧":u"gyz", u"单":u"dcs",
+       u"腌":u"ay", u"阿":u"ae", u"艾":u"ay", u"扒":u"bp", u"膀":u"bp",
+       u"磅":u"bp", u"堡":u"bp", u"刨":u"bp", u"暴":u"bp", u"泌":u"bm",
+       u"辟":u"bp", u"扁":u"bp", u"便":u"bp", u"便":u"pb", u"骠":u"bp",
+       u"泊":u"bp", u"藏":u"cz", u"曾":u"cz", u"禅":u"cs", u"裳":u"cs",
+       u"剿":u"cj", u"嘲":u"cz", u"车":u"cj", u"铛":u"cd", u"乘":u"cs",
+       u"澄":u"cd", u"匙":u"cs", u"臭":u"cx", u"畜":u"cx", u"幢":u"cz",
+       u"椎":u"cz", u"兹":u"cz", u"伺":u"cs", u"枞":u"cz", u"攒":u"cz",
+       u"撮":u"cz", u"沓":u"dt", u"沓":u"dt", u"叨":u"dt", u"钿":u"dt",
+       u"调":u"dt", u"囤":u"dt", u"否":u"fp", u"脯":u"fp", u"芥":u"gj",
+       u"扛":u"gk", u"革":u"gj", u"给":u"gj", u"颈":u"gj", u"枸":u"gj",
+       u"谷":u"gy", u"鹄":u"gh", u"纶":u"gl", u"莞":u"gw", u"桧":u"gh",
+       u"咳":u"hk", u"吭":u"hk", u"行":u"hx", u"巷":u"hx", u"合":u"hg",
+       u"红":u"hg", u"虹":u"hj", u"会":u"hk", u"稽":u"jq", u"矜":u"jq",
+       u"稽":u"jq", u"缉":u"jq", u"亟":u"jq", u"茄":u"jq", u"侥":u"jy",
+       u"缴":u"jz", u"解":u"jx", u"趄":u"qj", u"咀":u"jz", u"卡":u"kq",
+       u"壳":u"kq", u"溃":u"kh", u"括":u"kg", u"蔓":u"mw", u"秘":u"mb",
+       u"粘":u"nz", u"拗":u"na", u"弄":u"nl", u"炮":u"pb", u"屏":u"pb",
+       u"曝":u"pb", u"瀑":u"pb", u"栖":u"qx", u"蹊":u"qx", u"奇":u"qj",
+       u"荨":u"qx", u"纤":u"qx", u"强":u"qj", u"圈":u"qj", u"葚":u"sr",
+       u"厦":u"sx", u"省":u"sx", u"识":u"sz", u"属":u"sz", u"忪":u"sz",
+       u"宿":u"sx", u"汤":u"st", u"提":u"td", u"圩":u"wx", u"尾":u"wy",
+       u"尉":u"wy", u"系":u"xj", u"虾":u"xh", u"吓":u"xh", u"校":u"xj",
+       u"吁":u"xy", u"叶":u"yx", u"遗":u"yw", u"乐":u"yl", u"颤":u"zc",
+       u"殖":u"zs" }
+
+LIST_CHARS={ u"～":u"~", u"！":u"!", u"＠":u"@", u"＃":u"#", u"＄":u"$",
+        u"％":u"%", u"＆":u"&", u"＊":u"*", u"（":u"(", u"）":u")", u"＿":u"_",
+        u"－":u"-", u"＋":u"+", u"［":u"[", u"］":u"]", u"＜":u"<", u"＞":u">",
+        u"？":u"?", u"，":u",", u"。":u".", u"／":u"/", u"、":u"," }
+
+
 def getPYSTR(s):
     try: s=unicode(s,"UTF8")
     except: return s
 
     ret = ""
     for i in range(len(s)):
-        ret += getPY(getSym(s[i]))
-    return ret
+        uchr = s[i]
+        uchr = LIST_CHARS.get(uchr,uchr)
+        if uchr == s[i] :
+            uchr = LIST_POLYPHONE.get(uchr,uchr)
+            if len(uchr) > 1 : uchr = u"`%s`"%uchr
+        if uchr == s[i] : uchr = getPY(uchr)
+        ret += uchr
+    return ret.encode("UTF8")
 
-def getSym(s):
-    try: chr = s.encode("UTF8")
-    except: return s
-    if chr <= '~' : return s
-    if chr=="～" : return unicode("~","UTF8")
-    if chr=="！" : return unicode("!","UTF8")
-    if chr=="＠" : return unicode("@","UTF8")
-    if chr=="＃" : return unicode("#","UTF8")
-    if chr=="＄" : return unicode("$","UTF8")
-    if chr=="％" : return unicode("%","UTF8")
-    if chr=="＆" : return unicode("&","UTF8")
-    if chr=="＊" : return unicode("*","UTF8")
-    if chr=="（" : return unicode("(","UTF8")
-    if chr=="）" : return unicode(")","UTF8")
-    if chr=="＿" : return unicode("_","UTF8")
-    if chr=="－" : return unicode("-","UTF8")
-    if chr=="＋" : return unicode("+","UTF8")
-    if chr=="［" : return unicode("[","UTF8")
-    if chr=="］" : return unicode("]","UTF8")
-    if chr=="＜" : return unicode("<","UTF8")
-    if chr=="＞" : return unicode(">","UTF8")
-    if chr=="？" : return unicode("?","UTF8")
-    if chr=="，" : return unicode(",","UTF8")
-    if chr=="。" : return unicode(".","UTF8")
-    if chr=="／" : return unicode("/","UTF8")
-    if chr=="、" : return unicode(",","UTF8")
-    return s
 
 def getPY(s):
-    try: s=s.encode("GB18030")
+    try: chr=s.encode("GB18030")
     except: return s
-    if s<"\xb0\xa1": return s
-    if s>"\xd7\xf9": return "?"
-    if s<"\xb0\xc5": return "a"
-    if s<"\xb2\xc1": return "b"
-    if s<"\xb4\xee": return "c"
-    if s<"\xb6\xea": return "d"
-    if s<"\xb7\xa2": return "e"
-    if s<"\xb8\xc1": return "f"
-    if s<"\xb9\xfe": return "g"
-    if s<"\xbb\xf7": return "h"
-    if s<"\xbf\xa6": return "j"
-    if s<"\xc0\xac": return "k"
-    if s<"\xc2\xe8": return "l"
-    if s<"\xc4\xc3": return "m"
-    if s<"\xc5\xb6": return "n"
-    if s<"\xc5\xbe": return "o"
-    if s<"\xc6\xda": return "p"
-    if s<"\xc8\xbb": return "q"
-    if s<"\xc8\xf6": return "r"
-    if s<"\xcb\xfa": return "s"
-    if s<"\xcd\xda": return "t"
-    if s<"\xce\xf4": return "w"
-    if s<"\xd1\xb9": return "x"
-    if s<"\xd4\xd1": return "y"
-    if s<"\xd7\xfa": return "z"
+    if chr<"\xb0\xa1": return s
+    if chr>"\xd7\xf9": return u"?"
+    if chr<"\xb0\xc5": return u"a"
+    if chr<"\xb2\xc1": return u"b"
+    if chr<"\xb4\xee": return u"c"
+    if chr<"\xb6\xea": return u"d"
+    if chr<"\xb7\xa2": return u"e"
+    if chr<"\xb8\xc1": return u"f"
+    if chr<"\xb9\xfe": return u"g"
+    if chr<"\xbb\xf7": return u"h"
+    if chr<"\xbf\xa6": return u"j"
+    if chr<"\xc0\xac": return u"k"
+    if chr<"\xc2\xe8": return u"l"
+    if chr<"\xc4\xc3": return u"m"
+    if chr<"\xc5\xb6": return u"n"
+    if chr<"\xc5\xbe": return u"o"
+    if chr<"\xc6\xda": return u"p"
+    if chr<"\xc8\xbb": return u"q"
+    if chr<"\xc8\xf6": return u"r"
+    if chr<"\xcb\xfa": return u"s"
+    if chr<"\xcd\xda": return u"t"
+    if chr<"\xce\xf4": return u"w"
+    if chr<"\xd1\xb9": return u"x"
+    if chr<"\xd4\xd1": return u"y"
+    if chr<"\xd7\xfa": return u"z"
+    return s
+
 
 if __name__== '__main__':
     if len(sys.argv) != 3 :
@@ -127,7 +140,7 @@ if __name__== '__main__':
     name=os.path.basename(cur)
     dir=os.path.dirname(cur)
     if len(dir)==0 : dir="./"
-    
+
     if not os.path.exists(dir):
         sys.exit(0)
 
@@ -143,13 +156,20 @@ if __name__== '__main__':
 
     _name_py= getPYSTR(_name).replace("\\","");
     for l in list:
-        _file_py= getPYSTR(l).replace("\\","")
+        _file_py = getPYSTR(l).replace("\\","")
         if l == _file_py : continue
 
-        i=0
-        while len(_name_py) > i and len(_file_py) > i :
-            if _file_py[i] == "?" or _file_py[i] == _name_py[i] :
-                i+=1; continue;
+        i=0;j=0;
+        while len(_name_py) > i and len(_file_py) > j :
+            if _file_py[j] == "`":
+                end = _file_py.index("`",j+1)
+                if _file_py.find( _name_py[i], j, end ) > 0 :
+                    i+=1; j=end+1
+                    continue
+            else:
+                if _name_py[i] == _file_py[j] or  _file_py[i] == "?":
+                    i+=1; j+=1
+                    continue;
             if _name_py[i]!=l[i] : break
         if len(_name_py) == i :
             tmp = (dir+"/"+l).replace(".//","")
