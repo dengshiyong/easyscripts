@@ -23,9 +23,17 @@
 #   2009-05-06修订  解决数字序号定位时借位的问题
 #   2009-08-30新增  增加多音字支持，比如“音乐”
 #                   ((遇到有未被收入的多音字，请邮件联系我))
+#   2009-08-31新增  增加模糊拼音支持，比如'n'->'l'
+#                   ((需手工增加环境变量，配置方法见后面说明))
 #
-# 配置:
+# 安装:
 #    直接执行 sh install.sh 进行安装;
+#
+# 如需模糊拼音支持，在系统环境变量中增加匹配的列表，对 n/l 进行模糊匹配
+# export CHSDIR="{ 'n':'l' }" 
+# 多个匹配对之间用逗号隔开：
+# export CHSDIR="{ 'n':'l','f':'p' }" 
+#
 #
 # 问题：
 #  1、多音字未解决,比如[浙江建行]要输入[zjjx]; ((已解决))
@@ -76,6 +84,12 @@ LIST_CHARS={ u"～":u"~", u"！":u"!", u"＠":u"@", u"＃":u"#", u"＄":u"$",
         u"－":u"-", u"＋":u"+", u"［":u"[", u"］":u"]", u"＜":u"<", u"＞":u">",
         u"？":u"?", u"，":u",", u"。":u".", u"／":u"/", u"、":u"," }
 
+LIST_TEST=None
+try:
+    LIST_TEST=eval( os.getenv("CHSDIR") )
+    LIST_TEST.keys()
+except:
+    LIST_TEST=None
 
 def getPYSTR(s):
     try: s=unicode(s,"UTF8")
@@ -83,12 +97,15 @@ def getPYSTR(s):
 
     ret = ""
     for i in range(len(s)):
-        uchr = s[i]
-        uchr = LIST_CHARS.get(uchr,uchr)
+        uchr = LIST_CHARS.get(s[i],s[i])
         if uchr == s[i] :
             uchr = LIST_POLYPHONE.get(uchr,uchr)
-            if len(uchr) > 1 : uchr = u"`%s`"%uchr
-        if uchr == s[i] : uchr = getPY(uchr)
+            if len(uchr) > 1 :
+                uchr = u"`%s`"%uchr
+            else:
+                uchr = getPY(uchr)
+                if uchr != s[i]:
+                    uchr = LIST_TEST.get(uchr,uchr)
         ret += uchr
     return ret.encode("UTF8")
 
@@ -129,8 +146,10 @@ if __name__== '__main__':
         sys.exit(1)
 
     dironly = sys.argv[1]
-    cur = sys.argv[2]
-    cur = cur.replace("\\","")
+
+    cur = sys.argv[2].replace("\\","")
+    for k in LIST_TEST.keys():
+        cur = cur.replace( k, LIST_TEST.get(k) )
 
     idx=None; _cur=cur
     if len(cur)>1 and cur[-1:] >='0' and cur[-1:]<='9':
@@ -138,7 +157,6 @@ if __name__== '__main__':
         _cur = cur[:-1]
 
     _name=os.path.basename(_cur)
-
     name=os.path.basename(cur)
     dir=os.path.dirname(cur)
     if len(dir)==0 : dir="./"
