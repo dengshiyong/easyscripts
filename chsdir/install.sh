@@ -1,8 +1,8 @@
 
 
-# ˵��: (�Ե�ǰ�û�����)
-#   ֱ��ִ�� sh install.sh ���а�װ��
-#   ������ɺ�ر��ն�,�����ն��в���
+# 说明: (以当前用户运行)
+#   直接执行 sh install.sh 进行安装。
+#   运行完成后关闭终端,在新终端中测试
 
 mkdir -p $HOME/bin
 cp chsdir chs_completion $HOME/bin/

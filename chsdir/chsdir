@@ -30,9 +30,9 @@
 #    直接执行 sh install.sh 进行安装;
 #
 # 如需模糊拼音支持，在系统环境变量中增加匹配的列表，对 n/l 进行模糊匹配
-# export CHSDIR="{ 'n':'l' }" 
+# export CHSDIR="{ 'n':'l' }"
 # 多个匹配对之间用逗号隔开：
-# export CHSDIR="{ 'n':'l','f':'p' }" 
+# export CHSDIR="{ 'n':'l','f':'p' }"
 #
 #
 # 问题：
@@ -54,30 +54,30 @@ import os,sys
 import locale
 
 LIST_POLYPHONE={ u"龟":u"jgq", u"咯":u"gkl", u"轧":u"gyz", u"单":u"dcs",
-       u"腌":u"ay", u"阿":u"ae", u"艾":u"ay", u"扒":u"bp", u"膀":u"bp",
-       u"磅":u"bp", u"堡":u"bp", u"刨":u"bp", u"暴":u"bp", u"泌":u"bm",
-       u"辟":u"bp", u"扁":u"bp", u"便":u"bp", u"便":u"pb", u"骠":u"bp",
-       u"泊":u"bp", u"藏":u"cz", u"曾":u"cz", u"禅":u"cs", u"裳":u"cs",
-       u"剿":u"cj", u"嘲":u"cz", u"车":u"cj", u"铛":u"cd", u"乘":u"cs",
-       u"澄":u"cd", u"匙":u"cs", u"臭":u"cx", u"畜":u"cx", u"幢":u"cz",
-       u"椎":u"cz", u"兹":u"cz", u"伺":u"cs", u"枞":u"cz", u"攒":u"cz",
-       u"撮":u"cz", u"沓":u"dt", u"沓":u"dt", u"叨":u"dt", u"钿":u"dt",
-       u"调":u"dt", u"囤":u"dt", u"否":u"fp", u"脯":u"fp", u"芥":u"gj",
-       u"扛":u"gk", u"革":u"gj", u"给":u"gj", u"颈":u"gj", u"枸":u"gj",
-       u"谷":u"gy", u"鹄":u"gh", u"纶":u"gl", u"莞":u"gw", u"桧":u"gh",
-       u"咳":u"hk", u"吭":u"hk", u"行":u"hx", u"巷":u"hx", u"合":u"hg",
-       u"红":u"hg", u"虹":u"hj", u"会":u"hk", u"稽":u"jq", u"矜":u"jq",
-       u"稽":u"jq", u"缉":u"jq", u"亟":u"jq", u"茄":u"jq", u"侥":u"jy",
-       u"缴":u"jz", u"解":u"jx", u"趄":u"qj", u"咀":u"jz", u"卡":u"kq",
-       u"壳":u"kq", u"溃":u"kh", u"括":u"kg", u"蔓":u"mw", u"秘":u"mb",
-       u"粘":u"nz", u"拗":u"na", u"弄":u"nl", u"炮":u"pb", u"屏":u"pb",
-       u"曝":u"pb", u"瀑":u"pb", u"栖":u"qx", u"蹊":u"qx", u"奇":u"qj",
-       u"荨":u"qx", u"纤":u"qx", u"强":u"qj", u"圈":u"qj", u"葚":u"sr",
-       u"厦":u"sx", u"省":u"sx", u"识":u"sz", u"属":u"sz", u"忪":u"sz",
-       u"宿":u"sx", u"汤":u"st", u"提":u"td", u"圩":u"wx", u"尾":u"wy",
-       u"尉":u"wy", u"系":u"xj", u"虾":u"xh", u"吓":u"xh", u"校":u"xj",
-       u"吁":u"xy", u"叶":u"yx", u"遗":u"yw", u"乐":u"yl", u"颤":u"zc",
-       u"殖":u"zs" }
+        u"腌":u"ay", u"阿":u"ae", u"艾":u"ay", u"扒":u"bp", u"膀":u"bp",
+        u"磅":u"bp", u"堡":u"bp", u"刨":u"bp", u"暴":u"bp", u"泌":u"bm",
+        u"辟":u"bp", u"扁":u"bp", u"便":u"bp", u"便":u"pb", u"骠":u"bp",
+        u"泊":u"bp", u"藏":u"cz", u"曾":u"cz", u"禅":u"cs", u"裳":u"cs",
+        u"剿":u"cj", u"嘲":u"cz", u"车":u"cj", u"铛":u"cd", u"乘":u"cs",
+        u"澄":u"cd", u"匙":u"cs", u"臭":u"cx", u"畜":u"cx", u"幢":u"cz",
+        u"椎":u"cz", u"兹":u"cz", u"伺":u"cs", u"枞":u"cz", u"攒":u"cz",
+        u"撮":u"cz", u"沓":u"dt", u"沓":u"dt", u"叨":u"dt", u"钿":u"dt",
+        u"调":u"dt", u"囤":u"dt", u"否":u"fp", u"脯":u"fp", u"芥":u"gj",
+        u"扛":u"gk", u"革":u"gj", u"给":u"gj", u"颈":u"gj", u"枸":u"gj",
+        u"谷":u"gy", u"鹄":u"gh", u"纶":u"gl", u"莞":u"gw", u"桧":u"gh",
+        u"咳":u"hk", u"吭":u"hk", u"行":u"hx", u"巷":u"hx", u"合":u"hg",
+        u"红":u"hg", u"虹":u"hj", u"会":u"hk", u"稽":u"jq", u"矜":u"jq",
+        u"稽":u"jq", u"缉":u"jq", u"亟":u"jq", u"茄":u"jq", u"侥":u"jy",
+        u"缴":u"jz", u"解":u"jx", u"趄":u"qj", u"咀":u"jz", u"卡":u"kq",
+        u"壳":u"kq", u"溃":u"kh", u"括":u"kg", u"蔓":u"mw", u"秘":u"mb",
+        u"粘":u"nz", u"拗":u"na", u"弄":u"nl", u"炮":u"pb", u"屏":u"pb",
+        u"曝":u"pb", u"瀑":u"pb", u"栖":u"qx", u"蹊":u"qx", u"奇":u"qj",
+        u"荨":u"qx", u"纤":u"qx", u"强":u"qj", u"圈":u"qj", u"葚":u"sr",
+        u"厦":u"sx", u"省":u"sx", u"识":u"sz", u"属":u"sz", u"忪":u"sz",
+        u"宿":u"sx", u"汤":u"st", u"提":u"td", u"圩":u"wx", u"尾":u"wy",
+        u"尉":u"wy", u"系":u"xj", u"虾":u"xh", u"吓":u"xh", u"校":u"xj",
+        u"吁":u"xy", u"叶":u"yx", u"遗":u"yw", u"乐":u"yl", u"颤":u"zc",
+        u"殖":u"zs" }
 
 LIST_CHARS={ u"～":u"~", u"！":u"!", u"＠":u"@", u"＃":u"#", u"＄":u"$",
         u"％":u"%", u"＆":u"&", u"＊":u"*", u"（":u"(", u"）":u")", u"＿":u"_",
