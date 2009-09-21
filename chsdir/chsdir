@@ -84,12 +84,12 @@ LIST_CHARS={ u"～":u"~", u"！":u"!", u"＠":u"@", u"＃":u"#", u"＄":u"$",
         u"－":u"-", u"＋":u"+", u"［":u"[", u"］":u"]", u"＜":u"<", u"＞":u">",
         u"？":u"?", u"，":u",", u"。":u".", u"／":u"/", u"、":u"," }
 
-LIST_TEST=None
+LIST_TEST={}
 try:
     LIST_TEST=eval( os.getenv("CHSDIR") )
     LIST_TEST.keys()
 except:
-    LIST_TEST=None
+    LIST_TEST={}
 
 def getPYSTR(s):
     try: s=unicode(s,"UTF8")
