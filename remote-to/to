@@ -166,6 +166,7 @@ def TO_SSH(hostinfo):
                 'Name or service not known' ,\
                 'No such device'            ,\
                 'IDENTIFICATION HAS CHANGED',\
+                'Host key verification failed',\
                 'Connection refused'         \
                 ],timeout=10)
 
@@ -182,7 +183,7 @@ def TO_SSH(hostinfo):
                 return -1
         elif index == 1 :
             child.sendline(password)
-        elif index == 6 :
+        elif index == 6 or index == 7 :
             Log( "错误[%s]:密码或密钥已更改" % index )
             return -1
         else:
@@ -307,10 +308,10 @@ def showhelp():
     telnet or ssh to remote machine and try autologin.
  ----------------------------------------------------------------------
  USAGE :
-    to <tab>     show hosts configed in $HOME/.to.hosts
-    to hostid    resolve host from config and try autologin
+    to <tab>         show hosts configed in $HOME/.to.hosts
+    to hostid        resolve host from config and try autologin
     to hostid ftp    autologin with ftp protocol
-    to --help    display this help and exit
+    to --help        display this help and exit
  ----------------------------------------------------------------------
 
 \033[1mAUTHOR\033[0m
