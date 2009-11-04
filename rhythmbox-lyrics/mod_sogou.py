@@ -110,7 +110,7 @@ class LyricsSearch(Thread) :
         lypath = "%s/.lyrics/%s" % ( os.environ.get('HOME'), self.__artic )
         if not os.path.exists(lypath):
             os.mkdir(lypath)
-        lyfullname = "%s/%s.lyric" % (lypath,self.__title)
+        lyfullname = "%s/%s.lrc" % (lypath,self.__title)
         f = open(lyfullname,"w+")
         f.write(s)
         f.close()

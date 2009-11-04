@@ -40,7 +40,9 @@ class LyricsDBus :
         self.__lyfilename = "%s/.lyrics/%s/%s.lyric" % (os.getenv("HOME"),self.artist,self.title)
 
         if not os.path.exists(self.__lyfilename) :
-            LyricsSearch(self.title,self.artist).start()
+            self.__lyfilename = "%s/.lyrics/%s/%s.lrc" % (os.getenv("HOME"),self.artist,self.title)
+            if not os.path.exists(self.__lyfilename) :
+                LyricsSearch(self.title,self.artist).start()
 
         self.__loc.Reset()
 
@@ -67,7 +69,7 @@ class LyricsDBus :
             self.title = new_val
         elif prop == "artist":
             self.artist = new_val
-        self.__lyfilename = "%s/.lyrics/%s/%s.lyric" % (os.getenv("HOME"),self.artist,self.title)
+        self.__lyfilename = "%s/.lyrics/%s/%s.lrc" % (os.getenv("HOME"),self.artist,self.title)
         self.__loc.Reset()
 
     def connect (self):
