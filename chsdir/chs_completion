@@ -1,40 +1,83 @@
-_filedir ()
+_filedir()
 {
-    local IFS='
-' xspec;
-    _expand || return 0;
-    local toks=() tmp;
-    while read -r tmp; do
-        [[ -n $tmp ]] && toks[${#toks[@]}]=$tmp;
-    done < <( compgen -d -- "$(quote_readline "$cur")" );
-    if [[ "$1" != -d ]]; then
-        xspec=${1:+"!*.$1"};
-        while read -r tmp; do
-            [[ -n $tmp ]] && toks[${#toks[@]}]=$tmp;
-        done < <( compgen -f -X "$xspec" -- "$(quote_readline "$cur")" );
-    fi;
-    chs=($(chsdir "x$1" "$cur"))
-    COMPREPLY=( "${COMPREPLY[@]}" "${toks[@]}" "${chs[@]}" )
+	local IFS=$'\t\n' xspec
+
+	_expand || return 0
+
+	local toks=( ) tmp
+	while read -r tmp; do
+		[[ -n $tmp ]] && toks[${#toks[@]}]=$tmp
+	done < <( compgen -d -- "$(quote_readline "$cur")" )
+
+	if [[ "$1" != -d ]]; then
+		xspec=${1:+"!*.$1"}
+		while read -r tmp; do
+			[[ -n $tmp ]] && toks[${#toks[@]}]=$tmp
+		done < <( compgen -f -X "$xspec" -- "$(quote_readline "$cur")" )
+	fi
+	chs=($(chsdir "x$1" "$cur"))
+	COMPREPLY=( "${COMPREPLY[@]}" "${toks[@]}" "${chs[@]}" )
 }
 
-_filedir_xspec ()
+_filedir_xspec()
 {
-    local IFS cur xspec;
-    IFS='
-';
-    COMPREPLY=();
-    cur=`_get_cword`;
-    _expand || return 0;
-    xspec=$( sed -ne '/^complete .*[ 	]'${1##*/}'\([ 	]\|$\)/{p;q;}' 		  $BASH_COMPLETION );
-    xspec=${xspec#*-X };
-    xspec=${xspec%% *};
-    local toks=() tmp;
-    while read -r tmp; do
-        [[ -n $tmp ]] && toks[${#toks[@]}]=$tmp;
-    done < <( compgen -d -- "$(quote_readline "$cur")" );
-    while read -r tmp; do
-        [[ -n $tmp ]] && toks[${#toks[@]}]=$tmp;
-    done < <( eval compgen -f -X $xspec -- "\$(quote_readline "\$cur")" );
-    chs=($(chsdir "x$1" "$cur"))
-    COMPREPLY=( "${toks[@]}" "${chs[@]}" )
+	local IFS cur xspec
+
+	IFS=$'\t\n'
+	COMPREPLY=()
+	cur=`_get_cword`
+
+	_expand || return 0
+
+	xspec=$( sed -ne $'/^complete .*[ \t]'${1##*/}$'\([ \t]\|$\)/{p;q;}' \
+		  $BASH_COMPLETION )
+	xspec=${xspec#*-X }
+	xspec=${xspec%% *}
+
+	local toks=( ) tmp
+
+	while read -r tmp; do
+		[[ -n $tmp ]] && toks[${#toks[@]}]=$tmp
+	done < <( compgen -d -- "$(quote_readline "$cur")" )
+
+	while read -r tmp; do
+		[[ -n $tmp ]] && toks[${#toks[@]}]=$tmp
+	done < <( eval compgen -f -X $xspec -- "\$(quote_readline "\$cur")" )
+
+	chs=($(chsdir "x$1" "$cur"))
+	COMPREPLY=( "${toks[@]}" "${chs[@]}" )
 }
+
+# FIX BY http://stackoverflow.com/questions/342969/how-do-i-get-bash-completion-to-work-with-aliases/1793178#1793178
+
+fix_wrap_alias()
+{
+  [[ "$#" == 3 ]] || return 1
+
+  local alias_name="$1"
+  local aliased_command="$2"
+  local alias_arguments="$3"
+  local num_alias_arguments=$(echo "$alias_arguments" | wc -w)
+  local completion=$(complete -p $aliased_command 2> /dev/null)
+  echo $completion | grep -q -- -F || return 0
+  local namespace=alias_completion::
+  local completion_function=${completion##* -F }
+  completion_function=${completion_function%% *}
+  [[ "${completion_function#$namespace}" != $completion_function ]] && return 0
+  local wrapper_name="${namespace}${alias_name}"
+  eval "
+  function ${wrapper_name}() {
+      let COMP_CWORD+=$num_alias_arguments
+      args=( \"${alias_arguments}\" )
+      COMP_WORDS=( $aliased_command \${args[@]} \${COMP_WORDS[@]:1} )
+      $completion_function
+  } "
+  local new_completion=${completion/-F * /-F $wrapper_name }
+  new_completion="${new_completion% *} $alias_name"
+  eval "$new_completion"
+}
+
+eval "$(alias -p | sed -e 's/alias \([^=][^=]*\)='\''\([^ ][^ ]*\) *\(.*\)'\''/fix_wrap_alias \1 \2 '\''\3'\'' /')"
+
+unset fix_wrap_alias
+
