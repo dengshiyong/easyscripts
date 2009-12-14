@@ -42,7 +42,8 @@ def get_hostinfo(hostid):
     checkConfig(inifile)
 
     hostinfo={ 'hostid':'',
-            'host':'', 'name':'', 'pass':'', 'type':'', 'code':''}
+            'host':'', 'name':'', 'pass':'',
+            'type':'', 'code':'', 'wait':10 }
 
     # 读配置文件,取出对应主机信息
     conf = ConfigParser.ConfigParser()
@@ -52,7 +53,7 @@ def get_hostinfo(hostid):
         return -1
 
     hostinfo["hostid"] = hostid
-    # host name pass
+    # hostid username password
     try:
         hostinfo["host"] = conf.get(hostid,"host")
         hostinfo["name"] = conf.get(hostid,"name")
@@ -60,16 +61,21 @@ def get_hostinfo(hostid):
     except:
         Log( "错误:主机参数[host/name/pass]有误" )
         return -1
-    # type
+    # type : ssh/telnet/ftp
     try:
         hostinfo["type"] = conf.get(hostid,"type")
     except:
         hostinfo["type"] = "telnet"
-    # code
+    # code : character encoding
     try:
         hostinfo["code"] = conf.get(hostid,"code")
     except:
         hostinfo["code"] = ""
+    # wait: timeout wait
+    try:
+        hostinfo["wait"] = int(conf.get(hostid,"wait"))
+    except:
+        hostinfo["wait"] = 10
 
     return hostinfo
 
@@ -79,6 +85,7 @@ def TO_TELNET(hostinfo):
     username=hostinfo["name"]
     password=hostinfo["pass"]
     code=hostinfo["code"]
+    wait=hostinfo["wait"]
 
     """ 执行连线动作"""
     global child
@@ -96,7 +103,7 @@ def TO_TELNET(hostinfo):
                 'Name or service not known' ,\
                 'No such device'            ,\
                 'Connection refused'         \
-                ],timeout=10)
+                ],timeout=wait)
         if index != 0 :
             Log( "错误[%s]:连接主机失败" % index )
             return -1
@@ -109,7 +116,7 @@ def TO_TELNET(hostinfo):
     child.sendline(username);
 
     try:
-        index = child.expect([ '[Pp]assword[: ]' ],timeout=10 )
+        index = child.expect([ '[Pp]assword[: ]' ],timeout=wait )
         if index != 0 :
             Log( "错误:等待密码提示失败" )
             return -1
@@ -122,7 +129,7 @@ def TO_TELNET(hostinfo):
     child.sendline(password)
 
     try:
-        index = child.expect(['(>|%|#|$)','invalid'],timeout=10)
+        index = child.expect(['(>|%|#|$)','invalid'],timeout=wait)
         if index != 0 :
             Log( "错误:等待交互提示符失败" )
             return -1
@@ -149,6 +156,7 @@ def TO_SSH(hostinfo):
     username=hostinfo["name"]
     password=hostinfo["pass"]
     code=hostinfo["code"]
+    wait=hostinfo["wait"]
 
     """ 执行连线动作"""
     global child
@@ -168,14 +176,14 @@ def TO_SSH(hostinfo):
                 'IDENTIFICATION HAS CHANGED',\
                 'Host key verification failed',\
                 'Connection refused'         \
-                ],timeout=10)
+                ],timeout=wait)
 
         print "%s%s" % ( child.before, child.after ),
 
         if index == 0 :
             child.sendline("yes")
             try:
-                child.expect( 'assword(:| )', timeout=10 )
+                child.expect( 'assword(:| )', timeout=wait )
                 print "%s%s" % ( child.before, child.after ),
                 child.sendline(password)
             except:
@@ -195,7 +203,7 @@ def TO_SSH(hostinfo):
         return -1
 
     try:
-        index = child.expect(['[>%#\$] {0,1}$','assword:'],timeout=10)
+        index = child.expect(['[>%#\$] {0,1}$','assword:'],timeout=wait)
         if index == 1 :
             Log( "错误:密码有误" )
             return -1
@@ -239,7 +247,7 @@ def TO_FTP(hostinfo):
                 'No route to host'          ,\
                 'Network is unreachable'    ,\
                 'Name or service not known' ,\
-                ],timeout=10)
+                ],timeout=wait)
         print "%s%s" % ( child.before, child.after ),
         if index == 0 :
             child.sendline( "user " + username );
@@ -247,7 +255,7 @@ def TO_FTP(hostinfo):
             Log( "错误[%s]:主机交互失败" % index )
             return -1
     except:
-        Log( "错误:连接主机失败(超时)" )
+        Log( "错误:连接主机失败(超时1)" )
         return -1
 
     while True :
@@ -257,7 +265,7 @@ def TO_FTP(hostinfo):
                     '\n230 .*'                  ,\
                     '\n331 .*\n[Pp]assword:'    ,\
                     '\n530 .*'                  ,\
-                    ],timeout=10)
+                    ],timeout=wait)
             print "%s%s" % ( child.before, child.after ),
             if index == 0 :
                 child.sendline(username);
@@ -272,11 +280,11 @@ def TO_FTP(hostinfo):
                 Log( "错误[%s]:连接主机失败" % index )
                 return -1
         except:
-            Log( "错误:连接主机失败(超时)" )
+            Log( "错误:连接主机失败(超时2)" )
             return -1
 
     try:
-        index = child.expect(['> '],timeout=10)
+        index = child.expect(['ftp> '],timeout=wait)
     except:
         Log( "错误:等待交互提示符失败(超时)" )
         return -1
@@ -299,7 +307,7 @@ def TO_FTP(hostinfo):
 def showhelp():
     print """
 \033[1mNAME\033[0m
-    to - telnet or ssh to remote machine.
+    to - telnet/ssh/ftp to remote machine.
 
 \033[1mSYNOPSIS\033[0m
     \033[1mto\033[0m hostid
@@ -328,6 +336,9 @@ if __name__ == "__main__":
 
     # >1
     hostid=sys.argv[1]
+    if hostid[0]=='-':
+        showhelp()
+        sys.exit(-1)
     hostinfo=get_hostinfo(hostid)
     if hostinfo == -1 :
         sys.exit(-1)

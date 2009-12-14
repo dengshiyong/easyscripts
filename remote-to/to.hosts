@@ -23,4 +23,5 @@ name=john
 pass=john123  
 type=telnet
 code=gb2312
+wait=20
 
