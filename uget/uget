@@ -1,0 +1,95 @@
+#!/bin/bash
+# 2009-12-11 shaozx@gmail.com
+#
+# Usage:
+#    ./uget listfile
+#    ./uget listfile limitCount
+# For example:
+#    ./uget down.lst
+#    ./uget down.lst 5
+#
+
+################################################################
+#                     HOW TO GET LIST FILE
+# 1. Run synaptic
+# 2. Click the icon with name "Mark All Upgrades" on the tool bar.
+# 3. In the menu, select "File -> Generate package download script"
+# That's the file useful (-4-) 20100505
+################################################################
+
+
+
+#################################################################
+# args
+#  $1  download list file
+#  $2  threads limit (default 15)
+#################################################################
+LIST_FILE=$1
+[ -z "$LIST_FILE" ] && echo "Nothing to deal with." && exit 0
+[ ! -f "$LIST_FILE" ]  && echo "File not exists." && exit 0
+
+THREAD=$2
+[ $2 -gt 0 2>/dev/null ] || THREAD=15
+
+
+#################################################################
+# get list
+#################################################################
+LIST="`cat $LIST_FILE | sed "s/^.*http:/http:/" | grep ^http:`"
+TOTAL=`echo $LIST | awk '{print NF}'`
+echo "!!! DOWNLOAD $TOTAL PACKAGES !!!"
+
+#################################################################
+# get root permission
+#################################################################
+sudo echo "download with root permission." || exit -1
+
+#################################################################
+# trap INT
+#################################################################
+function kdown()
+{
+	THREAD=0
+	#sleep 3
+	sudo pkill -9 -P $$ wget
+	printf "\n\ndownload break!!\n\n"
+	exit 0
+}
+
+trap kdown INT
+
+#################################################################
+# save place
+#################################################################
+APT_DIR="/var/cache/apt/archives/"
+[ ! -d $APT_DIR ] && mkdir -p $APT_DIR
+
+for uri in $LIST
+do
+	while [ `pgrep wget | wc -l ` -gt $THREAD ]
+	do
+		sleep 1
+	done
+
+	pkg=`basename $uri`
+	# reuse old donloads
+	[ -f "$APT_DIR/partial/$pkg" ] && mv "$APT_DIR/partial/$pkg" "$APT_DIR/$pkg"
+	# skip downloading packages
+	if [ `ps -ef|grep "$uri"|grep -v grep|wc -l` -gt 0 ]
+	then
+		printf "%-10s%s\n" SKIP $pkg
+		continue
+	fi
+	sudo wget -c $uri -O $APT_DIR/$pkg &
+done
+
+wait
+
+sudo mv $LIST_FILE /var/log/uget/uget-`date +%Y%m%d%H%M%S`.list
+
+#################################################################
+# notify
+#################################################################
+printf "\a"
+sleep 0.5 && printf "\a"
+sleep 0.5 && printf "\a"
