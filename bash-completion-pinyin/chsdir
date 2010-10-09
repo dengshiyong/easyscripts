@@ -152,7 +152,7 @@ if __name__== '__main__':
         cur = cur.replace( k, LIST_TEST.get(k) )
 
     idx=None; _cur=cur
-    if len(cur)>1 and cur[-1:] >='0' and cur[-1:]<='9':
+    if len(cur)>1 and cur[-1:] >'0' and cur[-1:]<='9':
         idx = int(cur[-1])
         _cur = cur[:-1]
 
@@ -169,6 +169,7 @@ if __name__== '__main__':
     except:
         sys.exit(0)
 
+    # TODO delete ??
     if name in list or _name in list :
         sys.exit(0)
 
