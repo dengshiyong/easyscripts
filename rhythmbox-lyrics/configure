@@ -4,20 +4,22 @@
 lines=1
 # font shadow
 shadow=1
-# ALIGN_CENTER=1 ALIGN_LEFT=0 ALIGN_RIGHT=2
+# 0-ALIGN_LEFT 1-ALIGN_CENTER 2-ALIGN_RIGHT
 align=1
 # font color
 colour=#FFFFFF
-# font
-font=-*-bookman-*-*-*-*-34-*-*-*-*-*-*-*,-*-kai-*-*-*-*-48-*-*-*-*-*-*-*
-# POS_BOT=1 POS_MID=2 POS_TOP=0
+# font ( /usr/bin/xfontsel )
+#font=-*-bookman-*-*-*-*-34-*-*-*-*-*-*-*,-*-kai-*-*-*-*-48-*-*-*-*-*-*-*
+#font=-*-bookman-*-*-*-*-34-*-*-*-*-*-*-*,-*-song ti-*-*-*-*-36-*-*-*-*-*-*-*
+#font=-*-bookman-*-*-*-*-34-*-*-*-*-*-*-*,-*-*-*-*-*-*-24-*-*-*-*-*-gb2312.1980-*
+# 0-POS_TOP 1-POS_BOT 2-POS_MID
 pos=1
 # timeout,delay before lyric disappear
 timeout=10
 # horizontal offset
 hoffset=0
 # vertical offset, skip status-bar --> 30
-offset=30
+offset=40
 
 ### not support yet :-(
 noLocale=False
