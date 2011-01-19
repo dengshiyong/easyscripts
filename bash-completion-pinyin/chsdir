@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# shaozx@gmail.com 2009-10-08
+# shaozx@gmail.com 2011-01-19
 #
 # 用拼音补全命令行中的中文名称和路径
 #
@@ -25,6 +25,8 @@
 #                   ((遇到有未被收入的多音字，请邮件联系我))
 #   2009-08-31新增  增加模糊拼音支持，比如'n'->'l'
 #                   ((需手工增加环境变量，配置方法见后面说明))
+#   2011-01-19修订  修正多音字在中间的问题，感谢 mozbugbox 提交修订代码
+#                   参考 http://code.google.com/p/easyscripts/issues/detail?id=1
 #
 # 安装:
 #    直接执行 sh install.sh 进行安装;
@@ -182,7 +184,7 @@ if __name__== '__main__':
 
         i=0;j=0;
         while len(_name_py) > i and len(_file_py) > j :
-            if _file_py[j] == "`":
+            if _file_py[j] == "`" and _name_py[i] != "`":
                 end = _file_py.index("`",j+1)
                 if _file_py.find( _name_py[i], j, end ) > 0 :
                     i+=1; j=end+1

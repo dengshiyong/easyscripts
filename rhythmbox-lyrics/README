@@ -1,3 +1,11 @@
 
-Put this folder to $HOME/.gnome2/rhythmbox/plugins/ .
+STEP 1:
+	install rhythmbox-plugins 
+	( sudo apt-get install rhythmbox-plugins )
+STEP 2:
+	Put this folder to $HOME/.gnome2/rhythmbox/plugins/ .
+
+DEBUG:
+	pkill -9 rhythmbox
+	python ./mod_dbus.py
 
