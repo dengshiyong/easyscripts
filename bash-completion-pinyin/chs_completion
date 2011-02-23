@@ -1,30 +1,36 @@
+
 _filedir()
 {
-    local IFS=$'\t\n' xspec
+    local i IFS=$'\n' xspec
 
-    _expand || return 0
+    _tilde "$cur" || return 0
 
     local -a toks
-    local tmp
+    local quoted tmp
 
+    _quote_readline_by_ref "$cur" quoted
     toks=( ${toks[@]-} $(
-    compgen -d -- "$(quote_readline "$cur")" | {
-    while read -r tmp; do
-        echo $tmp
-    done
-}
-))
+        compgen -d -- "$quoted" | {
+            while read -r tmp; do
+                # TODO: I have removed a "[ -n $tmp ] &&" before 'printf ..',
+                #       and everything works again. If this bug suddenly
+                #       appears again (i.e. "cd /b<TAB>" becomes "cd /"),
+                #       remember to check for other similar conditionals (here
+                #       and _filedir_xspec()). --David
+                printf '%s\n' $tmp
+            done
+        }
+    ))
 
-if [[ "$1" != -d ]]; then
-    xspec=${1:+"!*.$1"}
-    toks=( ${toks[@]-} $(
-    compgen -f -X "$xspec" -- "$(quote_readline "$cur")" | {
-    while read -r tmp; do
-        [ -n $tmp ] && echo $tmp
-    done
-}
-))
+    if [[ "$1" != -d ]]; then
+        # Munge xspec to contain uppercase version too
+        [[ ${BASH_VERSINFO[0]} -ge 4 ]] && \
+            xspec=${1:+"!*.@($1|${1^^})"} || \
+            xspec=${1:+"!*.@($1|$(printf %s $1 | tr '[:lower:]' '[:upper:]'))"}
+        toks=( ${toks[@]-} $( compgen -f -X "$xspec" -- $quoted) )
     fi
+    [ ${#toks[@]} -ne 0 ] && _compopt_o_filenames
+
 	chs=($(chsdir "x$1" "$cur"))
 	COMPREPLY=( "${COMPREPLY[@]}" "${toks[@]}" "${chs[@]}" )
 }
@@ -33,14 +39,16 @@ _filedir_xspec()
 {
     local IFS cur xspec
 
-    IFS=$'\t\n'
+    IFS=$'\n'
     COMPREPLY=()
-    cur=`_get_cword`
+    _get_comp_words_by_ref cur
 
     _expand || return 0
 
-    xspec=$( sed -ne $'/^complete .*[ \t]'${1##*/}$'\([ \t]\|$\)/{p;q;}' \
-            $BASH_COMPLETION )
+    # get first exclusion compspec that matches this command
+    xspec=$( awk "/^complete[ \t]+.*[ \t]${1##*/}([ \t]|\$)/ { print \$0; exit }" \
+        "$BASH_COMPLETION" )
+    # prune to leave nothing but the -X spec
     xspec=${xspec#*-X }
     xspec=${xspec%% *}
 
@@ -51,18 +59,31 @@ _filedir_xspec()
         compgen -d -- "$(quote_readline "$cur")" | {
         while read -r tmp; do
             # see long TODO comment in _filedir() --David
-            echo $tmp
+            printf '%s\n' $tmp
         done
         }
         ))
 
+    # Munge xspec to contain uppercase version too
+    eval xspec="${xspec}"
+    local matchop=!
+    if [[ $xspec == !* ]]; then
+        xspec=${xspec#!}
+        matchop=@
+    fi
+    [[ ${BASH_VERSINFO[0]} -ge 4 ]] && \
+        xspec="$matchop($xspec|${xspec^^})" || \
+        xspec="$matchop($xspec|$(printf %s $xspec | tr '[:lower:]' '[:upper:]'))"
+
     toks=( ${toks[@]-} $(
-        eval compgen -f -X "$xspec" -- "\$(quote_readline "\$cur")" | {
+        eval compgen -f -X "!$xspec" -- "\$(quote_readline "\$cur")" | {
         while read -r tmp; do
-            [ -n $tmp ] && echo $tmp
+            [ -n $tmp ] && printf '%s\n' $tmp
         done
         }
         ))
+
+    [ ${#toks[@]} -ne 0 ] && _compopt_o_filenames
 
     chs=($(chsdir "x$1" "$cur"))
     COMPREPLY=( "${toks[@]}" "${chs[@]}" )
