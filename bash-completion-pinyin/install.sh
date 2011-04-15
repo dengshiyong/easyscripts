@@ -29,23 +29,19 @@ fi
 
 if [ ! -f "/etc/bash_completion" ]
 then
-	printf "\n\t/etc/bash_completion not found :( \n\n" && \
-	exit 1
-fi
-
-if [ ! -d "/etc/bash_completion.d" ]
-then
-	printf "\n\t/etc/bash_completion.d/ not found :( \n\n" && \
+	printf "\n\tbash-completion not found :( \n\n" && \
 	exit 1
 fi
 
 if [ `id -u` -eq 0 ]
 then
 	# INSTALL AS ROOT
+	[ ! -d "/etc/bash_completion.d" ] && mkdir -m 755 -p /etc/bash_completion.d
 	cp chsdir /usr/bin/chsdir
 	chmod 755 /usr/bin/chsdir
 	cp chs_completion /etc/bash_completion.d/chs_completion
-else 
+	chmod 644 /etc/bash_completion.d/chs_completion
+else
 	# INSTALL AS NORMAL USER
 	mkdir -p $HOME/bin
 	cp chsdir chs_completion $HOME/bin/
