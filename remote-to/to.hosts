@@ -1,27 +1,27 @@
 #
 # to.hosts
 #
+#
+[ALIAS]
+nn=demo2
+mm=demo3
 
-################################################################################
-# DEMO
-################################################################################
 [demo1]
-host=192.168.235.1 
+host=127.0.0.1 
 name=john
 pass=john123  
-type=telnet
 
 [demo2]
-host=192.168.235.1 
+host=127.0.0.1 
 name=john
 pass=john123  
 type=ssh
 
 [demo3]
-host=192.168.235.1 
+host=127.0.0.1 
 name=john
 pass=john123  
 type=telnet
-code=gb2312
+code=GBK
 wait=20
 

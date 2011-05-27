@@ -1,0 +1,38 @@
+#!/bin/bash
+# add line to $HOME/.bashrc 
+# . /PATH/to.completion
+
+_C_have()
+{
+	unset -v have
+	type $1 &>/dev/null && have="yes"
+}
+
+################################################################################
+# to
+################################################################################
+_C_to_host()
+{
+    local cmd cur hlist
+	COMPREPLY=()
+    cur=${COMP_WORDS[COMP_CWORD]}
+
+	cmd=`type to 2>/dev/null | awk '{print $NF}' | tr -d '()'`
+	[ -z "$cmd" ] && return 0
+	LISTFILE="`dirname $cmd`/to.hosts"
+	[ ! -r $LISTFILE ] && LISTFILE=$HOME/.to.hosts
+	[ ! -r $LISTFILE ] && return 0
+	
+	if [ $COMP_CWORD -eq 1 ] 
+	then
+		hlist=`$cmd LIST`
+	else
+		hlist='telnet ssh ftp info'
+	fi
+    
+    COMPREPLY=( $(compgen -W "$hlist" $cur) )
+    return 0
+}
+
+complete -F _C_to_host to
+

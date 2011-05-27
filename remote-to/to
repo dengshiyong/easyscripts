@@ -8,7 +8,7 @@ import struct, fcntl, termios, signal
 try:
     import pexpect, pxssh
 except:
-    print "需要使用 python-pexpect 组件:\n\tsudo apt-get install python-pexpect "
+    print "\n\t缺少组件: 安装 python-pexpect 后重试\n"
     sys.exit(-1)
 
 
@@ -22,25 +22,64 @@ def sig_resizewin(sig, data):
     child.setwinsize(a[0],a[1])
 
 
-def checkConfig(inifile):
-    try:
-        f = open(inifile,'r')
-        f.close()
-    except:
-        f = open(inifile,'w')
-        f.write("#\n# to.hosts\n#\n")
-        f.write("[demo]\nhost=10.0.2.3\nname=john\npass=123456\ntype=telnet")
-        f.close()
-        Log( "配置文件已经创建[%s],增加新主机信息后重试" % inifile )
-        sys.exit(-1)
+def checkConfig():
+    # 打开配置文件 to.hosts ,先查找执行码所在目录
+    inifile = os.path.dirname( sys.argv[0] ) + '/to.hosts'
+    if inifile == '/to.hosts': inifile = 'to.hosts'
+
+    if not os.path.exists(inifile):
+        # 检查 $HOME/.to.hosts
+        inifile = os.path.expandvars("$HOME/.to.hosts")
+        if not os.path.exists(inifile):
+            f = open(inifile,'w')
+            f.write("#\n# to.hosts\n#\n")
+            f.write("[demo]\nhost=10.0.2.3\nname=john\npass=123456\ntype=telnet")
+            f.close()
+            Log( "配置文件示例已经创建[%s]，修改后重试" % inifile )
+            sys.exit(-1)
+    return inifile
 
 
-def get_hostinfo(hostid):
+def show_hostlist():
+    # 读配置文件,取出对应主机信息
+    conf = ConfigParser.ConfigParser()
+    conf.readfp( open(inifile) )
+
+    if conf.has_section("ALIAS"):
+        for h in conf.options("ALIAS"):
+            print h
+        conf.remove_section("ALIAS")
+
+    conf.sections().sort()
+    for h in conf.sections():
+        print h
+
+
+def show_hostinfo(hostid):
     # 打开配置文件 to.hosts
     inifile = os.path.dirname( sys.argv[0] ) + '/to.hosts'
     if inifile == '/to.hosts': inifile = 'to.hosts'
-    checkConfig(inifile)
 
+    # 读配置文件,取出对应主机信息
+    conf = ConfigParser.ConfigParser()
+    conf.readfp( open(inifile) )
+
+    if conf.has_section(hostid):
+        hostinfo["hostid"] = hostid
+    elif conf.has_section("ALIAS") and conf.has_option("ALIAS",hostid):
+        hostinfo["hostid"] = conf.get("ALIAS",hostid)
+    else:
+        Log( "错误:没有[%s]对应的主机信息" % hostid )
+        return -1
+
+    print "========[ %s ]==========" % hostid
+    print "[%s]" % hostinfo["hostid"]
+
+    for h in conf.options(hostinfo["hostid"]):
+        print "%s=%s" % (h,conf.get(hostid,h))
+
+
+def get_hostinfo(hostid):
     hostinfo={ 'hostid':'',
             'host':'', 'name':'', 'pass':'',
             'type':'', 'code':'', 'wait':10 }
@@ -48,11 +87,20 @@ def get_hostinfo(hostid):
     # 读配置文件,取出对应主机信息
     conf = ConfigParser.ConfigParser()
     conf.readfp( open(inifile) )
-    if not conf.has_section(hostid):
-        Log( "错误:没有[%s]对应的主机信息" % hostid )
-        return -1
 
-    hostinfo["hostid"] = hostid
+    if conf.has_section(hostid):
+        hostinfo["hostid"] = hostid
+    elif conf.has_option("ALIAS",hostid):
+        hostid = conf.get("ALIAS",hostid)
+        if conf.has_section(hostid):
+            hostinfo["hostid"] = hostid
+        else:
+            Log( "错误:没有[%s]对应的主机信息" % hostid )
+            return "" 
+    else:
+        Log( "错误:没有[%s]对应的主机信息" % hostid )
+        return "" 
+
     # hostid username password
     try:
         hostinfo["host"] = conf.get(hostid,"host")
@@ -60,21 +108,21 @@ def get_hostinfo(hostid):
         hostinfo["pass"] = conf.get(hostid,"pass")
     except:
         Log( "错误:主机参数[host/name/pass]有误" )
-        return -1
+        return ""
     # type : ssh/telnet/ftp
-    try:
+    if conf.has_option(hostid,"type"):
         hostinfo["type"] = conf.get(hostid,"type")
-    except:
+    else:
         hostinfo["type"] = "telnet"
     # code : character encoding
-    try:
+    if conf.has_option(hostid,"code"):
         hostinfo["code"] = conf.get(hostid,"code")
-    except:
+    else:
         hostinfo["code"] = ""
     # wait: timeout wait
-    try:
+    if conf.has_option(hostid,"wait"):
         hostinfo["wait"] = int(conf.get(hostid,"wait"))
-    except:
+    else:
         hostinfo["wait"] = 10
 
     return hostinfo
@@ -95,6 +143,7 @@ def TO_TELNET(hostinfo):
         child = pexpect.spawn( 'telnet -E ' + hostaddr );
 
     signal.signal(signal.SIGWINCH, sig_resizewin)
+
     try:
         index = child.expect([               \
                 '[Ll]ogin:( )$'             ,\
@@ -108,7 +157,7 @@ def TO_TELNET(hostinfo):
             Log( "错误[%s]:连接主机失败" % index )
             return -1
     except:
-        Log( "错误:连接主机失败(超时)" )
+        Log( "错误:连接主机失败(超时001)" )
         return -1
 
     print "%s%s" % ( child.before, child.after ),
@@ -121,7 +170,7 @@ def TO_TELNET(hostinfo):
             Log( "错误:等待密码提示失败" )
             return -1
     except:
-        Log( "错误:等待密码提示失败(超时)" )
+        Log( "错误:等待密码提示失败(超时002)" )
         return -1
 
     print "%s%s" % ( child.before, child.after ),
@@ -134,7 +183,7 @@ def TO_TELNET(hostinfo):
             Log( "错误:等待交互提示符失败" )
             return -1
     except:
-        Log( "错误:等待交互提示符失败(超时)" )
+        Log( "错误:等待交互提示符失败(超时003)" )
         return -1
 
     print "%s%s" % ( child.before, child.after )
@@ -165,10 +214,12 @@ def TO_SSH(hostinfo):
     else :
         child = pexpect.spawn( 'ssh %s@%s' % (username,hostaddr) );
     signal.signal(signal.SIGWINCH, sig_resizewin)
+    login_success=0
     try:
         index = child.expect([               \
                 '\(yes\/no\)\? '            ,\
                 '[Pp]assword[: ]'           ,\
+                '[>%#\$] {0,1}$'            ,\
                 'No route to host'          ,\
                 'Network is unreachable'    ,\
                 'Name or service not known' ,\
@@ -191,7 +242,9 @@ def TO_SSH(hostinfo):
                 return -1
         elif index == 1 :
             child.sendline(password)
-        elif index == 6 or index == 7 :
+        elif index == 2 :
+            login_success=1
+        elif index == 7 or index == 8 :
             Log( "错误[%s]:密码或密钥已更改" % index )
             return -1
         else:
@@ -199,17 +252,18 @@ def TO_SSH(hostinfo):
             return -1
     except Exception, e:
         #print type(e); print e.args; print e
-        Log( "错误:连接主机失败(超时)" )
+        Log( "错误:连接主机失败(超时004)" )
         return -1
 
-    try:
-        index = child.expect(['[>%#\$] {0,1}$','assword:'],timeout=wait)
-        if index == 1 :
-            Log( "错误:密码有误" )
+    if login_success == 0:
+        try:
+            index = child.expect(['[>%#\$] {0,1}$','assword:'],timeout=wait)
+            if index == 1 :
+                Log( "错误:密码有误" )
+                return -1
+        except:
+            Log( "错误:等待交互提示符失败(超时005)" )
             return -1
-    except:
-        Log( "错误:等待交互提示符失败(超时)" )
-        return -1
 
     print "%s%s" % ( child.before, child.after )
     print "##################################################"
@@ -232,6 +286,7 @@ def TO_FTP(hostinfo):
     username=hostinfo["name"]
     password=hostinfo["pass"]
     code=hostinfo["code"]
+    wait=hostinfo["wait"]
 
     """ 执行连线动作"""
     global child
@@ -255,7 +310,7 @@ def TO_FTP(hostinfo):
             Log( "错误[%s]:主机交互失败" % index )
             return -1
     except:
-        Log( "错误:连接主机失败(超时1)" )
+        Log( "错误:连接主机失败(超时006)" )
         return -1
 
     while True :
@@ -280,14 +335,14 @@ def TO_FTP(hostinfo):
                 Log( "错误[%s]:连接主机失败" % index )
                 return -1
         except:
-            Log( "错误:连接主机失败(超时2)" )
+            Log( "错误:连接主机失败(超时007)" )
             return -1
 
-    try:
-        index = child.expect(['ftp> '],timeout=wait)
-    except:
-        Log( "错误:等待交互提示符失败(超时)" )
-        return -1
+    #try:
+    #    index = child.expect(['ftp> '],timeout=wait)
+    #except:
+    #    Log( "错误:等待交互提示符失败(超时008)" )
+    #    return -1
 
     print "%s%s" % ( child.before, child.after )
 
@@ -310,7 +365,7 @@ def showhelp():
     to - telnet/ssh/ftp to remote machine.
 
 \033[1mSYNOPSIS\033[0m
-    \033[1mto\033[0m hostid
+    \033[1mto\033[0m hostid [telnet|ssh|ftp]
 
 \033[1mDESCRIPTION\033[0m
     telnet or ssh to remote machine and try autologin.
@@ -329,18 +384,27 @@ def showhelp():
 
 
 if __name__ == "__main__":
-    # HELP
+
+    # 检查配置文件
+    inifile = checkConfig()
+
+    # 显示帮助信息
     if len(sys.argv) == 1 :
         showhelp()
-        sys.exit(-1)
+        sys.exit(0)
 
-    # >1
+    # 检查输入参数
     hostid=sys.argv[1]
     if hostid[0]=='-':
         showhelp()
-        sys.exit(-1)
-    hostinfo=get_hostinfo(hostid)
-    if hostinfo == -1 :
+        sys.exit(0)
+    elif hostid == 'LIST':
+        show_hostlist()
+        sys.exit(0)
+
+    hostinfo = get_hostinfo( hostid )
+
+    if hostinfo == "" :
         sys.exit(-1)
 
     # >2
@@ -353,6 +417,8 @@ if __name__ == "__main__":
         TO_SSH(hostinfo);
     elif type == "ftp":
         TO_FTP(hostinfo);
-    else : # telnet
+    elif type == "telnet":
         TO_TELNET(hostinfo);
+    else:
+        show_hostinfo(hostid)
 
