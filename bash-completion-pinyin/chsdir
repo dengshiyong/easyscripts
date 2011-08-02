@@ -149,11 +149,15 @@ if __name__== '__main__':
 
     dironly = sys.argv[1]
 
-    cur = sys.argv[2].replace("\\","")
-    for k in LIST_TEST.keys():
-        cur = cur.replace( k, LIST_TEST.get(k) )
+    cur = sys.argv[2]
+    cur = os.path.expanduser(cur)
+    cur = cur.replace("\\","")
 
-    idx=None; _cur=cur
+    _cur=cur
+    for k in LIST_TEST.keys():
+        _cur = _cur.replace( k, LIST_TEST.get(k) )
+
+    idx=None
     if len(cur)>1 and cur[-1:] >'0' and cur[-1:]<='9':
         idx = int(cur[-1])
         _cur = cur[:-1]
