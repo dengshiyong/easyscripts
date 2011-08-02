@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-# shaozx@gmail.com 2011-01-19
+# shaozx@gmail.com 2011-08-02
 #
 # 用拼音补全命令行中的中文名称和路径
 #
@@ -27,6 +27,7 @@
 #                   ((需手工增加环境变量，配置方法见后面说明))
 #   2011-01-19修订  修正多音字在中间的问题，感谢 mozbugbox 提交修订代码
 #                   参考 http://code.google.com/p/easyscripts/issues/detail?id=1
+#   2011-08-02修订  识别目录缩写,如 ~/
 #
 # 安装:
 #    直接执行 sh install.sh 进行安装;
