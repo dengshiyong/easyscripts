@@ -8,7 +8,7 @@ https://groups.google.com/group/binsos/browse_thread/thread/29fcf78c5c3236ee
 注意
 ==================================================================
  1. 如果系统未安装 python-pexpect 组件，运行时会提示安装
- 2. 命令行按 TAB 自动补全主机名功能，需要 bash_completion 支持
+ 2. 命令行按 TAB 键自动补全主机名功能，需要 bash_completion 支持
  3. to.hosts 文件中保存有明文的密码，建议置权限为 600
 
 
@@ -25,6 +25,7 @@ https://groups.google.com/group/binsos/browse_thread/thread/29fcf78c5c3236ee
  to demo1 telnet     登录demo1, 使用 telnet 方式
  to demo1 ssh        登录demo1, 使用 ssh 方式
  to demo1 ftp        登录demo1, 使用 ftp 方式
+ to demo1 sftp       登录demo1, 使用 sftp 方式
  to demo1 info       显示 demo1 的配置信息
 
 
