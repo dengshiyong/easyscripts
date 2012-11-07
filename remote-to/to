@@ -1,8 +1,9 @@
 #!/usr/bin/python2
 # -*- coding: UTF-8 -*-
-# shaozx@gmail.com 20090426
+# 20090426  shaozx@gmail.com  create
+# 20121107  shaozx@gmail.com  add rdesktop support
 
-import os, sys, ConfigParser
+import os, sys, time, ConfigParser
 import struct, fcntl, termios, signal
 
 try:
@@ -266,6 +267,21 @@ def TO_SFTP(hostinfo):
         Log( "错误:交互中断,退出!" )
         return -1
 
+def TO_RDESKTOP(hostinfo):
+    hostaddr=hostinfo["host"]
+    username=hostinfo["name"]
+    password=hostinfo["pass"]
+    code=hostinfo["code"]
+    wait=hostinfo["wait"]
+
+    """ 执行连线动作"""
+    os.system('exec rdesktop -u %s -p %s %s &' % (username,password,hostaddr) );
+    time.sleep(1)
+    print "##################################################"
+    print "#   auto login success, have a lot of fun ...    #"
+    print "##################################################"
+    print "rdesktop://%s@%s" % ( username,hostaddr ),
+
 def TO_SSH(hostinfo):
     hostaddr=hostinfo["host"]
     username=hostinfo["name"]
@@ -488,6 +504,8 @@ if __name__ == "__main__":
         TO_FTP(hostinfo);
     elif type == "sftp":
         TO_SFTP(hostinfo);
+    elif type == "rdesktop":
+        TO_RDESKTOP(hostinfo);
     else:
         show_hostinfo(hostid)
 

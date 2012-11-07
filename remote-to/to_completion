@@ -27,7 +27,7 @@ _C_to_host()
 	then
 		hlist=`$cmd LIST`
 	else
-		hlist='telnet ssh ftp info'
+		hlist='telnet ssh sftp ftp rdesktop info'
 	fi
     
     COMPREPLY=( $(compgen -W "$hlist" $cur) )
