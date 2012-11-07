@@ -26,6 +26,7 @@ https://groups.google.com/group/binsos/browse_thread/thread/29fcf78c5c3236ee
  to demo1 ssh        登录demo1, 使用 ssh 方式
  to demo1 ftp        登录demo1, 使用 ftp 方式
  to demo1 sftp       登录demo1, 使用 sftp 方式
+ to demo1 sftp       登录demo1, 使用 rdesktop 方式
  to demo1 info       显示 demo1 的配置信息
 
 

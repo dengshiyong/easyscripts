@@ -6,17 +6,20 @@
 nn=demo2
 mm=demo3
 
+# 基本配置,默认telnet
 [demo1]
 host=127.0.0.1 
 name=john
 pass=john123  
 
+# ssh 配置
 [demo2]
 host=127.0.0.1 
 name=john
 pass=john123  
 type=ssh
 
+# telnet 带转码,超时时间20秒
 [demo3]
 host=127.0.0.1 
 name=john
@@ -24,4 +27,21 @@ pass=john123
 type=telnet
 code=GBK
 wait=20
+
+# sftp
+[demo3]
+host=127.0.0.1 
+name=john
+pass=john123  
+type=sftp
+wait=20
+
+# rdesktop
+[demo3]
+host=127.0.0.1 
+name=john
+pass=john123  
+type=rdesktop
+wait=20
+
 
